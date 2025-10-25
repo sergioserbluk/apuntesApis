@@ -129,6 +129,8 @@ Los ejemplos ilustran la separación entre parámetros de consulta (`params`) y 
 
 Los timeouts deben definirse de acuerdo con la criticidad del proceso y pueden especificarse separadamente para conexión y lectura (`timeout=(3.05, 27)`). El manejo de excepciones debe diferenciar entre problemas de red (`ConnectionError`), de SSL (`SSLError`) o de tiempo (`Timeout`) para tomar acciones específicas (reintentos, degradación controlada). Revisar el contenido de respuesta (`response.json()` o `response.text`) permite construir mensajes de error más descriptivos hacia la capa de presentación.
 
+Además de capturar la excepción genérica, conviene envolver las llamadas en bloques `try/except` que registren (`logging`) qué endpoint falló, con qué parámetros y en qué momento, para facilitar el diagnóstico posterior. Las APIs públicas suelen implementar políticas de *rate limiting*; por ello es aconsejable interpretar códigos `429 Too Many Requests` y respetar el header `Retry-After`. Cuando la operación es crítica, puede implementarse una estrategia de reintentos con backoff exponencial (por ejemplo, 1 s, 2 s, 4 s) y un número máximo de intentos, evitando saturar el servicio remoto. Finalmente, en clientes empresariales se acostumbra encapsular la lógica de consumo en clases o servicios que centralizan la gestión de errores y exponen resultados con estados homogéneos (`SUCCESS`, `RETRY`, `FAILED`) para que la capa superior decida cómo proceder.
+
 ---
 
 ### 2.4 Variables de Entorno y `.env`
@@ -182,9 +184,9 @@ Flask sigue la filosofía *micro* al proveer solo el núcleo necesario (enrutami
 
 ### 3.2 Decoradores de Ruta y Flujo de Petición
 ```python
-@app.get('/tareas')  
-@app.post('/tareas')  
-@app.put('/tareas/<int:id>')  
+@app.get('/tareas')
+@app.post('/tareas')
+@app.put('/tareas/<int:id>')
 @app.delete('/tareas/<int:id>')
 ```
 
@@ -196,6 +198,8 @@ def not_found(e):
 ```
 
 Cada decorador de ruta asocia un patrón URL con una función vista. Flask transforma la petición en un objeto `Request` accesible a través de `flask.request`, ejecuta la función y convierte la respuesta (diccionarios, tuplas, objetos `Response`) en una salida HTTP. Los parámetros dinámicos (`<int:id>`) incluyen validaciones de tipo básicas y facilitan la construcción de rutas significativas. Implementar manejadores de error centralizados permite responder con JSON uniforme en toda la API y registrar eventos críticos.
+
+El flujo de atención incluye varias etapas: `before_request` para preparar recursos o validar tokens antes de procesar la vista, la ejecución de la función decorada, `after_request` para ajustar headers o realizar *logging*, y `teardown_request` para liberar conexiones o cerrar sesiones de base de datos incluso si se produjo una excepción. Comprender estos hooks es clave al implementar middleware personalizado (por ejemplo, medir tiempos de respuesta o instrumentar trazas distribuidas). Asimismo, los decoradores aceptan parámetros como `methods=['GET','POST']` o `strict_slashes=False`, lo que brinda control fino sobre cómo se resuelven las rutas. Al construir APIs mayores, conviene migrar las vistas a *blueprints* y registrar decoradores sobre ellos (`@tareas_bp.route(...)`) para mantener el código modular y reutilizable en distintos proyectos.
 
 ---
 
