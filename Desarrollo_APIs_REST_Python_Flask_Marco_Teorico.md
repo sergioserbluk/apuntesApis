@@ -75,10 +75,13 @@ JSON deriva de la notación literal de objetos de JavaScript pero es un formato 
 - Versionado: `/api/v1/...`
 - Idempotencia en PUT/DELETE
 - Respuestas coherentes: siempre JSON + status apropiado
+- Documentar supuestos y ejemplos para guiar a los consumidores
 
 El diseño RESTful se basa en la identificación de recursos (entidades manipulables) y en la representación consistente de sus estados. Se recomienda estructurar las rutas jerárquicamente (`/usuarios/42/tareas`) para reflejar relaciones y emplear filtros mediante parámetros de consulta (`?estado=pendiente`). El versionado explícito evita romper integraciones existentes al introducir cambios incompatibles. Finalmente, es conveniente documentar reglas de paginación, ordenamiento y enlaces HATEOAS cuando se quiera guiar al cliente a través de flujos complejos.
 
 > **Referencia práctica:** ver Guía práctica, Nivel 1 (Postman y APIs públicas).
+
+> **Cómo se aplica:** en los ejercicios de Postman se solicita verificar códigos, headers y cuerpos de forma idéntica a lo explicado aquí. Tener esta lista de control a mano permite comprobar si cada petición cumple el contrato REST (estructura de ruta, verbo apropiado, código de estado coherente) antes de avanzar a la automatización en Python.
 
 ---
 
@@ -96,6 +99,8 @@ r.raise_for_status()
 ```
 
 `requests` abstrae detalles de sockets y manejo manual del protocolo HTTP, ofreciendo una API Pythonica. Permite añadir autenticación (Basic, Token, Bearer), gestionar sesiones persistentes con `requests.Session()` para reutilizar conexiones TCP (mejorando performance) y configurar adaptadores personalizados para estrategias de reintento (`Retry`). Comprender estas capacidades resulta útil al construir clientes robustos para APIs reales.
+
+> **Cómo se aplica:** la Guía práctica, Nivel 2, replica cada escenario con código Python. Revisa este apartado antes de ejecutar los scripts para tener claro qué parámetros (`params`, `json`, `headers`) corresponde utilizar en cada función.
 
 ---
 
@@ -130,6 +135,8 @@ Los ejemplos ilustran la separación entre parámetros de consulta (`params`) y 
 Los timeouts deben definirse de acuerdo con la criticidad del proceso y pueden especificarse separadamente para conexión y lectura (`timeout=(3.05, 27)`). El manejo de excepciones debe diferenciar entre problemas de red (`ConnectionError`), de SSL (`SSLError`) o de tiempo (`Timeout`) para tomar acciones específicas (reintentos, degradación controlada). Revisar el contenido de respuesta (`response.json()` o `response.text`) permite construir mensajes de error más descriptivos hacia la capa de presentación.
 
 Además de capturar la excepción genérica, conviene envolver las llamadas en bloques `try/except` que registren (`logging`) qué endpoint falló, con qué parámetros y en qué momento, para facilitar el diagnóstico posterior. Las APIs públicas suelen implementar políticas de *rate limiting*; por ello es aconsejable interpretar códigos `429 Too Many Requests` y respetar el header `Retry-After`. Cuando la operación es crítica, puede implementarse una estrategia de reintentos con backoff exponencial (por ejemplo, 1 s, 2 s, 4 s) y un número máximo de intentos, evitando saturar el servicio remoto. Finalmente, en clientes empresariales se acostumbra encapsular la lógica de consumo en clases o servicios que centralizan la gestión de errores y exponen resultados con estados homogéneos (`SUCCESS`, `RETRY`, `FAILED`) para que la capa superior decida cómo proceder.
+
+> **Cómo se aplica:** al momento de resolver el Ejercicio C de la guía práctica, utiliza esta lista para auditar si tu manejo de errores contempla `timeout`, códigos HTTP y mensajes descriptivos.
 
 ---
 
@@ -200,6 +207,8 @@ def not_found(e):
 Cada decorador de ruta asocia un patrón URL con una función vista. Flask transforma la petición en un objeto `Request` accesible a través de `flask.request`, ejecuta la función y convierte la respuesta (diccionarios, tuplas, objetos `Response`) en una salida HTTP. Los parámetros dinámicos (`<int:id>`) incluyen validaciones de tipo básicas y facilitan la construcción de rutas significativas. Implementar manejadores de error centralizados permite responder con JSON uniforme en toda la API y registrar eventos críticos.
 
 El flujo de atención incluye varias etapas: `before_request` para preparar recursos o validar tokens antes de procesar la vista, la ejecución de la función decorada, `after_request` para ajustar headers o realizar *logging*, y `teardown_request` para liberar conexiones o cerrar sesiones de base de datos incluso si se produjo una excepción. Comprender estos hooks es clave al implementar middleware personalizado (por ejemplo, medir tiempos de respuesta o instrumentar trazas distribuidas). Asimismo, los decoradores aceptan parámetros como `methods=['GET','POST']` o `strict_slashes=False`, lo que brinda control fino sobre cómo se resuelven las rutas. Al construir APIs mayores, conviene migrar las vistas a *blueprints* y registrar decoradores sobre ellos (`@tareas_bp.route(...)`) para mantener el código modular y reutilizable en distintos proyectos.
+
+> **Cómo se aplica:** al construir tu API en el Nivel 3 de la guía práctica, verifica que cada decorador refleje el verbo y la ruta definidos en el modelo de recurso. Diseña primero las rutas sobre papel utilizando el checklist de la sección 1.7 y luego transpórtalas a Flask.
 
 ---
 
@@ -274,6 +283,8 @@ def guardar(tareas):
 > **Referencia práctica:** ver Guía práctica, Nivel 3 (CRUD completo y pruebas en Postman).
 
 Esta estrategia de persistencia es adecuada para prototipos y demostraciones, pero no soporta concurrencia ni escalado. Es importante implementar bloqueos o versiones para evitar pérdidas de datos si múltiples procesos escriben simultáneamente. En escenarios reales, se debe migrar a bases de datos transaccionales o sistemas de almacenamiento persistente con transacciones y mecanismos de recuperación.
+
+> **Cómo se aplica:** cuando llegues al bloque de persistencia en la práctica, intenta primero con `storage.json` y luego identifica qué piezas deberías reemplazar para utilizar una base relacional siguiendo las recomendaciones de esta sección.
 
 ---
 
