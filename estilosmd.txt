@@ -1,0 +1,38 @@
+estos son los estilos que se pueden usar en formato md
+# Título 1
+## Título 2
+### Título 3
+#### Título 4
+##### Título 5
+###### Título 6
+**Texto en negrita**
+*Texto en cursiva*
+~~Texto tachado~~
+- Lista no ordenada
+1. Lista ordenada
+[Enlace a Google](https://www.google.com)
+`Código en línea`
+```python
+# Bloque de código en Python
+def hola_mundo():
+    print("Hola, mundo!")
+hola_mundo()
+```
+> Cita en bloque
+![Texto alternativo de la imagen](https://www.ejemplo.com/imagen.jpg)
+Tabla:
+| Encabezado 1 | Encabezado 2 |
+|--------------|--------------|
+| Fila 1 Col 1 | Fila 1 Col 2 |
+| Fila 2 Col 1 | Fila 2 Col 2 |
+Saltos de línea
+Se pueden usar dos espacios al final de una línea para crear un salto de línea.
+También se puede usar una línea en blanco para separar párrafos.
+Listas anidadas
+- Elemento 1
+  - Sub-elemento 1.1
+  - Sub-elemento 1.2
+- Elemento 2
+
+Espacios en blanco
+Se pueden usar espacios en blanco para mejorar la legibilidad del texto sin afectar el formato.
